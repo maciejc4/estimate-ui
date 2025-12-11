@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+:root {
+  --background: #e8ecef;
+  --foreground: #2d3436;
+  --primary: #4a90a4;
+  --primary-dark: #357a8a;
+  --secondary: #6c5ce7;
+  --accent: #00b894;
+  --error: #d63031;
+  --warning: #fdcb6e;
+  --success: #00b894;
+  
+  /* Neumorphism shadows */
+  --shadow-light: #ffffff;
+  --shadow-dark: #c8cfd3;
+  --shadow-neu-flat: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+  --shadow-neu-pressed: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+  --shadow-neu-convex: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #2d3436;
+    --foreground: #e8ecef;
+    --shadow-light: #3a4144;
+    --shadow-dark: #202628;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Neumorphism utility classes */
+.neu-flat {
+  box-shadow: var(--shadow-neu-flat);
+  border-radius: 16px;
+}
+
+.neu-pressed {
+  box-shadow: var(--shadow-neu-pressed);
+  border-radius: 16px;
+}
+
+.neu-convex {
+  box-shadow: var(--shadow-neu-convex);
+  border-radius: 12px;
+}
+
+.neu-button {
+  background: var(--background);
+  box-shadow: var(--shadow-neu-flat);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.neu-button:hover {
+  box-shadow: var(--shadow-neu-convex);
+}
+
+.neu-button:active {
+  box-shadow: var(--shadow-neu-pressed);
+}
+
+.neu-input {
+  background: var(--background);
+  box-shadow: var(--shadow-neu-pressed);
+  border-radius: 12px;
+  border: none;
+  outline: none;
+}
+
+.neu-input:focus {
+  box-shadow: var(--shadow-neu-pressed), 0 0 0 2px var(--primary);
+}
+
+.neu-card {
+  background: var(--background);
+  box-shadow: var(--shadow-neu-flat);
+  border-radius: 20px;
+}
+
