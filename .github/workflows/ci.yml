@@ -30,28 +30,6 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8080
 
-  docker:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          tags: estimate-ui:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            NEXT_PUBLIC_API_URL=http://localhost:8080
-
   security:
     runs-on: ubuntu-latest
     permissions:
