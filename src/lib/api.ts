@@ -9,78 +9,20 @@ export const api = axios.create({
   },
 });
 
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Auth API
-export const authApi = {
-  register: (data: { email: string; password: string; companyName?: string; phone?: string }) =>
-    api.post('/api/auth/register', data),
-  login: (data: { email: string; password: string }) =>
-    api.post('/api/auth/login', data),
-  demo: () =>
-    api.post('/api/auth/demo'),
+// Catalog API (public, read-only)
+export const catalogApi = {
+  getWorks: () => api.get<Work[]>('/api/catalog/works'),
+  getWorksByCategory: (category: string) => api.get<Work[]>(`/api/catalog/works/category/${category}`),
+  getTemplates: () => api.get<RenovationTemplate[]>('/api/catalog/templates'),
+  getTemplatesByCategory: (category: string) => api.get<RenovationTemplate[]>(`/api/catalog/templates/category/${category}`),
+  getMaterialPrices: () => api.get<MaterialPrice[]>('/api/catalog/prices/materials'),
+  getLaborPrices: () => api.get<LaborPrice[]>('/api/catalog/prices/labor'),
 };
 
-// User API
-export const userApi = {
-  getMe: () => api.get('/api/users/me'),
-  updateMe: (data: { companyName?: string; phone?: string; newPassword?: string; currentPassword?: string }) =>
-    api.put('/api/users/me', data),
-  deleteMe: () => api.delete('/api/users/me'),
-};
-
-// Works API
-export const worksApi = {
-  getAll: () => api.get('/api/works'),
-  getById: (id: string) => api.get(`/api/works/${id}`),
-  create: (data: { name: string; unit: string; materials?: Material[] }) =>
-    api.post('/api/works', data),
-  update: (id: string, data: { name: string; unit: string; materials?: Material[] }) =>
-    api.put(`/api/works/${id}`, data),
-  delete: (id: string) => api.delete(`/api/works/${id}`),
-};
-
-// Templates API
-export const templatesApi = {
-  getAll: () => api.get('/api/templates'),
-  getById: (id: string) => api.get(`/api/templates/${id}`),
-  create: (data: { name: string; workIds?: string[] }) =>
-    api.post('/api/templates', data),
-  update: (id: string, data: { name: string; workIds?: string[] }) =>
-    api.put(`/api/templates/${id}`, data),
-  delete: (id: string) => api.delete(`/api/templates/${id}`),
-};
-
-// Estimates API
-export const estimatesApi = {
-  getAll: () => api.get('/api/estimates'),
-  getById: (id: string) => api.get(`/api/estimates/${id}`),
-  create: (data: EstimateRequest) => api.post('/api/estimates', data),
-  update: (id: string, data: EstimateRequest) => api.put(`/api/estimates/${id}`, data),
-  delete: (id: string) => api.delete(`/api/estimates/${id}`),
-  getPdf: (id: string, detail: 'full' | 'basic' = 'full') =>
-    api.get(`/api/estimates/${id}/pdf?detail=${detail}`, { responseType: 'blob' }),
+// PDF API
+export const pdfApi = {
+  generateEstimate: (data: PdfEstimateRequest, detail: 'FULL' | 'BASIC' = 'FULL') =>
+    api.post(`/api/pdf/estimate?detail=${detail}`, data, { responseType: 'blob' }),
 };
 
 // Types
@@ -88,24 +30,50 @@ export interface Material {
   name: string;
   unit: string;
   consumptionPerWorkUnit: number;
+  defaultPricePerUnit?: number;
 }
 
 export interface Work {
   id: string;
   name: string;
+  category: string;
   unit: string;
+  defaultLaborPrice: number;
+  isSystem: boolean;
   materials: Material[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface RenovationTemplate {
   id: string;
   name: string;
+  description: string;
+  category: string;
+  isSystem: boolean;
   workIds: string[];
-  works?: Work[];
-  createdAt: string;
-  updatedAt: string;
+}
+
+export interface MaterialPrice {
+  id: string;
+  materialName: string;
+  unit: string;
+  priceMin: number;
+  priceAvg: number;
+  priceMax: number;
+  sourceUrl?: string;
+  region?: string;
+  scrapedAt?: string;
+}
+
+export interface LaborPrice {
+  id: string;
+  workType: string;
+  unit: string;
+  priceMin: number;
+  priceAvg: number;
+  priceMax: number;
+  sourceUrl?: string;
+  region?: string;
+  scrapedAt?: string;
 }
 
 export interface EstimateMaterialPrice {
@@ -116,7 +84,7 @@ export interface EstimateMaterialPrice {
 }
 
 export interface EstimateWorkItem {
-  workId: string;
+  workId?: string;
   workName: string;
   unit: string;
   quantity: number;
@@ -124,51 +92,46 @@ export interface EstimateWorkItem {
   materialPrices: EstimateMaterialPrice[];
 }
 
-export interface EstimateRequest {
+export interface PdfEstimateRequest {
   investorName: string;
   investorAddress: string;
-  templateIds?: string[];
-  workItems?: EstimateWorkItem[];
-  materialDiscount?: number;
-  laborDiscount?: number;
-  notes?: string;
-  validUntil?: string;
-  startDate?: string;
-}
-
-export interface Estimate {
-  id: string;
-  investorName: string;
-  investorAddress: string;
-  templateIds: string[];
+  contractorName?: string;
+  contractorAddress?: string;
+  contractorPhone?: string;
+  contractorEmail?: string;
   workItems: EstimateWorkItem[];
-  materialCost: number;
-  laborCost: number;
   materialDiscount: number;
   laborDiscount: number;
-  materialCostWithDiscount: number;
-  laborCostWithDiscount: number;
-  totalCost: number;
   notes?: string;
   validUntil?: string;
   startDate?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  role: 'USER' | 'ADMIN';
-  companyName?: string;
-  phone?: string;
-}
+// Helper function to download PDF
+export const downloadPdf = async (data: PdfEstimateRequest, detail: 'FULL' | 'BASIC' = 'FULL') => {
+  const response = await pdfApi.generateEstimate(data, detail);
+  const blob = new Blob([response.data], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `kosztorys_${data.investorName.replace(/\s+/g, '_')}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
 
-export interface AuthResponse {
-  token: string;
-  userId: string;
-  email: string;
-  role: string;
-  companyName?: string;
-  phone?: string;
-}
+// Helper to create work item from catalog work
+export const createWorkItemFromWork = (work: Work, quantity: number = 1): EstimateWorkItem => ({
+  workId: work.id,
+  workName: work.name,
+  unit: work.unit,
+  quantity,
+  laborPricePerUnit: work.defaultLaborPrice,
+  materialPrices: work.materials.map(mat => ({
+    materialName: mat.name,
+    unit: mat.unit,
+    consumptionPerWorkUnit: mat.consumptionPerWorkUnit,
+    pricePerUnit: mat.defaultPricePerUnit || 0,
+  })),
+});
